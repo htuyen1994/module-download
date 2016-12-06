@@ -96,13 +96,13 @@ if ($nv_Request->isset_request('addfile', 'post')) {
 
     $alias = nv_substr(change_alias($array['title']), 0, 250);
 
-    $stmt = $db->prepare('SELECT COUNT(*) FROM ' . NV_PREFIXLANG . '_' . $module_data . ' WHERE alias= :alias');
+    $stmt = $db->prepare('SELECT COUNT(*) FROM ' . NV_MOD_TABLE . ' WHERE alias= :alias');
     $stmt->bindParam(':alias', $alias, PDO::PARAM_STR);
     $stmt->execute();
     $is_exists = $stmt->fetchColumn();
 
     if (! $is_exists) {
-        $stmt = $db->prepare('SELECT COUNT(*) FROM ' . NV_PREFIXLANG . '_' . $module_data . '_tmp WHERE title= :title');
+        $stmt = $db->prepare('SELECT COUNT(*) FROM ' . NV_MOD_TABLE . '_tmp WHERE title= :title');
         $stmt->bindParam(':title', $array['title'], PDO::PARAM_STR);
         $stmt->execute();
         $is_exists = $stmt->fetchColumn();
@@ -204,23 +204,23 @@ if ($nv_Request->isset_request('addfile', 'post')) {
                 $array['introtext'] = nv_nl2br($array['introtext'], '<br />');
                 $array['linkdirect'] = nv_nl2br($array['linkdirect'], '<br />');
 
-                $sql = 'INSERT INTO ' . NV_PREFIXLANG . '_' . $module_data . '_tmp (catid, title, description, introtext, uploadtime, user_id, user_name, author_name, author_email, author_url, fileupload, linkdirect, version, filesize, fileimage, copyright) VALUES (
-					 ' . $array['catid'] . ',
-					 :title,
-					 :description,
-					 :introtext,
-					 ' . NV_CURRENTTIME . ',
-					 ' . $array['user_id'] . ',
-					 :user_name,
-					 :author_name,
-					 :author_email,
-					 :author_url,
-					 :fileupload,
-					 :linkdirect,
-					 :version,
-					 ' . $array['filesize'] . ',
-					 :fileimage,
-					 :copyright)';
+                $sql = 'INSERT INTO ' . NV_MOD_TABLE . '_tmp (catid, title, description, introtext, uploadtime, user_id, user_name, author_name, author_email, author_url, fileupload, linkdirect, version, filesize, fileimage, copyright) VALUES (
+                     ' . $array['catid'] . ',
+                     :title,
+                     :description,
+                     :introtext,
+                     ' . NV_CURRENTTIME . ',
+                     ' . $array['user_id'] . ',
+                     :user_name,
+                     :author_name,
+                     :author_email,
+                     :author_url,
+                     :fileupload,
+                     :linkdirect,
+                     :version,
+                     ' . $array['filesize'] . ',
+                     :fileimage,
+                     :copyright)';
 
                 $data_insert = array();
                 $data_insert['title'] = $array['title'];

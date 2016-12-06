@@ -22,9 +22,9 @@ require_once NV_ROOTDIR . '/modules/' . $module_file . '/global.functions.php';
  */
 function nv_mod_down_config()
 {
-    global $module_name, $module_data, $module_name, $nv_Cache;
+    global $module_name, $module_name, $nv_Cache;
 
-    $sql = 'SELECT config_name,config_value FROM ' . NV_PREFIXLANG . '_' . $module_data . '_config';
+    $sql = 'SELECT config_name,config_value FROM ' . NV_MOD_TABLE . '_config';
     $list = $nv_Cache->db($sql, '', $module_name);
 
     $download_config = array();
@@ -59,6 +59,7 @@ if (!empty($list_cats_tmp)) {
         if (! $catvalue['parentid'] or isset($list_cats_tmp[$catvalue['parentid']])) {
             if (nv_user_in_groups($catvalue['groups_view'])) {
                 $catvalue['is_download_allow'] =  nv_user_in_groups($catvalue['groups_download']);
+                $catvalue['is_onlineview_allow'] =  nv_user_in_groups($catvalue['groups_onlineview']);
                 $list_cats[$catid] = $catvalue;
             }
         }

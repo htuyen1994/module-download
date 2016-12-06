@@ -31,11 +31,11 @@ $page_title = $lang_module['search'] . ' ' . $key;
 
 $db->sqlreset()
     ->select('COUNT(*)')
-    ->from(NV_PREFIXLANG . '_' . $module_data);
+    ->from(NV_MOD_TABLE);
 
 $base_url .= '&q=' . $key;
 if (! empty($key)) {
-    $where .= ' AND (title LIKE :title OR description LIKE :description OR introtext LIKE :introtext)';
+    $where .= ' AND (title LIKE :title OR introtext LIKE :introtext)';
 }
 
 if (! empty($cat) and isset($list_cats[$cat])) {
@@ -61,7 +61,6 @@ if (!empty($where)) {
     if (! empty($key)) {
         $keyword = '%' . addcslashes($key, '_%') . '%';
         $sth->bindParam(':title', $keyword, PDO::PARAM_STR);
-        $sth->bindParam(':description', $keyword, PDO::PARAM_STR);
         $sth->bindParam(':introtext', $keyword, PDO::PARAM_STR);
     }
     $sth->execute();
@@ -83,7 +82,6 @@ if (!empty($where)) {
         if (! empty($key)) {
             $keyword = '%' . addcslashes($key, '_%') . '%';
             $sth->bindParam(':title', $keyword, PDO::PARAM_STR);
-            $sth->bindParam(':description', $keyword, PDO::PARAM_STR);
             $sth->bindParam(':introtext', $keyword, PDO::PARAM_STR);
         }
         $sth->execute();

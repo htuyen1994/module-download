@@ -1,6 +1,6 @@
 .dl-fixheight{
-	max-height:300px;
-	overflow:auto;
+    max-height:300px;
+    overflow:auto;
 }
 .uiInlineTokenizer .uiToken {
     top: 2px;
@@ -55,7 +55,7 @@
     display: block;
     float: left;
     height: 25px;
-	line-height: 24px;
+    line-height: 24px;
     margin: 0 4px 4px 0;
     padding: 0 3px;
     position: relative;
@@ -104,4 +104,11 @@
     border-top-color: #DDDDDD;
     padding: 2px 6px 1px;
     text-align: center;
+}
+.groups-allow-area{
+    max-height: 200px;
+    overflow: auto;
+}
+span.fa-required{
+    display: block;
 }

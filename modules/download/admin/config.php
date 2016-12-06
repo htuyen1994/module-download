@@ -19,6 +19,7 @@ $groups_list = nv_groups_list();
 $readme_file = NV_ROOTDIR . '/' . NV_DATADIR . '/README.txt';
 
 $array_config = array();
+$array_pdf_handler = array('filetmp', 'phpattachment');
 
 if ($nv_Request->isset_request('submit', 'post')) {
     $array_config['indexfile'] = $nv_Request->get_title('indexfile', 'post', 'none');
@@ -34,6 +35,14 @@ if ($nv_Request->isset_request('submit', 'post')) {
     $array_config['is_resume'] = $nv_Request->get_int('is_resume', 'post', 0);
     $array_config['max_speed'] = $nv_Request->get_int('max_speed', 'post', 0);
     $array_config['tags_alias'] = $nv_Request->get_int('tags_alias', 'post', 0);
+    $array_config['delfile_mode'] = $nv_Request->get_int('delfile_mode', 'post', 0);
+    $array_config['structure_upload'] = $nv_Request->get_title('structure_upload', 'post', '', 0);
+    $array_config['scorm_handle_mode'] = $nv_Request->get_int('scorm_handle_mode', 'post', 0);
+    $array_config['fileserver'] = $nv_Request->get_int('fileserver', 'post', 0);
+    $array_config['shareport'] = $nv_Request->get_title('shareport', 'post', '');
+    $array_config['addthis_pubid'] = $nv_Request->get_title('addthis_pubid', 'post', '');
+    $array_config['pdf_handler'] = $nv_Request->get_title('pdf_handler', 'post', $array_pdf_handler[0]);
+    $array_config['list_title_length'] = $nv_Request->get_int('list_title_length', 'post', 0);
 
     $_groups_post = $nv_Request->get_array('groups_addfile', 'post', array());
     $array_config['groups_addfile'] = ! empty($_groups_post) ? implode(',', nv_groups_post(array_intersect($_groups_post, array_keys($groups_list)))) : '';
@@ -48,13 +57,30 @@ if ($nv_Request->isset_request('submit', 'post')) {
     }
 
     $array_config['upload_filetype'] = (! empty($array_config['upload_filetype'])) ? implode(',', $array_config['upload_filetype']) : '';
-
-    $sth = $db->prepare('UPDATE ' . NV_PREFIXLANG . '_' . $module_data . '_config SET config_value = :config_value WHERE config_name = :config_name');
+    
+    if (!in_array($array_config['shareport'], $global_array_shareport)) {
+        $array_config['shareport'] = $global_array_shareport[0];
+    } elseif ($array_config['shareport'] == 'addthis' and empty($array_config['addthis_pubid'])) {
+        $array_config['shareport'] = $global_array_shareport[0];
+    }
+    
+    if (!in_array($array_config['pdf_handler'], $array_pdf_handler)) {
+        $array_config['pdf_handler'] = $array_pdf_handler[0];
+    }
+    
     foreach ($array_config as $config_name => $config_value) {
         if ($config_name != 'readme') {
-            $sth->bindParam(':config_name', $config_name, PDO::PARAM_STR);
-            $sth->bindParam(':config_value', $config_value, PDO::PARAM_STR);
-            $sth->execute();
+            try {
+                $sth = $db->prepare('INSERT INTO ' . NV_MOD_TABLE . '_config (config_value, config_name) VALUES (:config_value, :config_name)');
+                $sth->bindParam(':config_name', $config_name, PDO::PARAM_STR);
+                $sth->bindParam(':config_value', $config_value, PDO::PARAM_STR);
+                $sth->execute();
+            } catch (Exception $e) {
+                $sth = $db->prepare('UPDATE ' . NV_MOD_TABLE . '_config SET config_value = :config_value WHERE config_name = :config_name');
+                $sth->bindParam(':config_name', $config_name, PDO::PARAM_STR);
+                $sth->bindParam(':config_value', $config_value, PDO::PARAM_STR);
+                $sth->execute();
+            }
         }
     }
 
@@ -83,13 +109,21 @@ $array_config['readme'] = '';
 $array_config['is_resume'] = 0;
 $array_config['max_speed'] = 0;
 $array_config['tags_alias'] = 0;
+$array_config['delfile_mode'] = 0;
+$array_config['structure_upload'] = 'Ym';
+$array_config['scorm_handle_mode'] = 0;
+$array_config['fileserver'] = 0;
+$array_config['shareport'] = 0;
+$array_config['addthis_pubid'] = 0;
+$array_config['pdf_handler'] = $array_pdf_handler[0];
+$array_config['list_title_length'] = 0;
 
 if (file_exists($readme_file)) {
     $array_config['readme'] = file_get_contents($readme_file);
     $array_config['readme'] = nv_htmlspecialchars($array_config['readme']);
 }
 
-$sql = 'SELECT config_name, config_value FROM ' . NV_PREFIXLANG . '_' . $module_data . '_config';
+$sql = 'SELECT config_name, config_value FROM ' . NV_MOD_TABLE . '_config';
 $result = $db->query($sql);
 while (list($c_config_name, $c_config_value) = $result->fetch(3)) {
     $array_config[$c_config_name] = $c_config_value;
@@ -123,7 +157,24 @@ if (! empty($groups_list)) {
         );
     }
 }
+
 $array_config['maxfilesize'] = number_format($array_config['maxfilesize']/1048576, 2);
+
+$array_structure_image = array();
+$array_structure_image[''] = NV_UPLOADS_DIR . '/' . $module_upload;
+$array_structure_image['Y'] = NV_UPLOADS_DIR . '/' . $module_upload . '/' . date('Y');
+$array_structure_image['Ym'] = NV_UPLOADS_DIR . '/' . $module_upload . '/' . date('Y_m');
+$array_structure_image['Y_m'] = NV_UPLOADS_DIR . '/' . $module_upload . '/' . date('Y/m');
+$array_structure_image['Ym_d'] = NV_UPLOADS_DIR . '/' . $module_upload . '/' . date('Y_m/d');
+$array_structure_image['Y_m_d'] = NV_UPLOADS_DIR . '/' . $module_upload . '/' . date('Y/m/d');
+
+$array_structure_image['username'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin';
+$array_structure_image['username_Y'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin/' . date('Y');
+$array_structure_image['username_Ym'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin/' . date('Y_m');
+$array_structure_image['username_Y_m'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin/' . date('Y/m');
+$array_structure_image['username_Ym_d'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin/' . date('Y_m/d');
+$array_structure_image['username_Y_m_d'] = NV_UPLOADS_DIR . '/' . $module_upload . '/username_admin/' . date('Y/m/d');
+
 $xtpl = new XTemplate('config.tpl', NV_ROOTDIR . '/themes/' . $global_config['module_theme'] . '/modules/' . $module_file);
 $xtpl->assign('FORM_ACTION', NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=' . $op);
 $xtpl->assign('LANG', $lang_module);
@@ -176,6 +227,72 @@ if (! empty($global_config['file_allowed_ext'])) {
 }
 
 $xtpl->assign('IS_ADDFILE', !$array_config['is_addfile'] ? 'style="display: none"' : '');
+
+// Kieu xoa file
+for ($i = 0; $i <= 2; $i ++) {
+    $xtpl->assign('DELFILE_MODE', array(
+        'key' => $i,
+        'title' => $lang_module['config_delfile_mode' . $i],
+        'selected' => $i == $array_config['delfile_mode'] ? ' selected="selected"' : ''
+    ));
+    $xtpl->parse('main.delfile_mode');
+}
+
+// Thu muc uploads
+foreach ($array_structure_image as $type => $dir) {
+    $xtpl->assign('STRUCTURE_UPLOAD', array(
+        'key' => $type,
+        'title' => $dir,
+        'selected' => $type == $array_config['structure_upload'] ? ' selected="selected"' : ''
+    ));
+    $xtpl->parse('main.structure_upload');
+}
+
+// Xu ly file SCORM
+for ($i = 0; $i <= 1; $i ++) {
+    $xtpl->assign('SCORM_HANDLE_MODE', array(
+        'key' => $i,
+        'title' => $lang_module['config_scorm_handle_mode' . $i],
+        'selected' => $i == $array_config['scorm_handle_mode'] ? ' selected="selected"' : ''
+    ));
+    $xtpl->parse('main.scorm_handle_mode');
+}
+
+for ($i = 0; $i <= 1; $i++) {
+    $xtpl->assign('FILESERVER', array(
+        'key' => $i,
+        'title' => $lang_module['config_fileserver' . $i],
+        'selected' => $i == $array_config['fileserver'] ? ' selected="selected"' : ''
+    ));
+    $xtpl->parse('main.fileserver');
+}
+$xtpl->assign('FILESERVER_MANAGER', NV_BASE_ADMINURL . 'index.php?' . NV_LANG_VARIABLE . '=' . NV_LANG_DATA . '&amp;' . NV_NAME_VARIABLE . '=' . $module_name . '&amp;' . NV_OP_VARIABLE . '=fileserver');
+$xtpl->assign('FILESERVER_DISPLAY', !empty($array_config['fileserver']) ? '' : ' style="display:none"');
+
+// Cổng chia sẻ
+foreach ($global_array_shareport as $shareport) {
+    $shareport = array(
+        'key' => $shareport,
+        'title' => $lang_module['config_share_shareport_' . $shareport],
+        'selected' => $shareport == $array_config['shareport'] ? ' selected="selected"' : ''
+    );
+    
+    $xtpl->assign('SHAREPORT', $shareport);
+    $xtpl->parse('main.shareport');
+}
+
+$xtpl->assign('ADDTHIS_CSS', $array_config['shareport'] == 'addthis' ? '' : ' style="display:none;"');
+
+foreach ($array_pdf_handler as $_pdf_handler) {
+    $pdf_handler = array(
+        'key' => $_pdf_handler,
+        'title' => $lang_module['config_pdf_handler_' . $_pdf_handler],
+        'selected' => $_pdf_handler == $array_config['pdf_handler'] ? ' selected="selected"' : ''
+    );
+    
+    $xtpl->assign('PDF_HANDLER', $pdf_handler);
+    $xtpl->parse('main.pdf_handler');
+}
 
 $xtpl->parse('main');
 $contents = $xtpl->text('main');

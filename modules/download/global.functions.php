@@ -12,8 +12,12 @@ if (! defined('NV_MAINFILE')) {
     die('Stop!!!');
 }
 
-$sql = 'SELECT * FROM ' . NV_PREFIXLANG . '_' . $module_data . '_categories ORDER BY sort ASC';
+define('NV_MOD_TABLE', (defined('SYS_DOWNLOAD_TABLE')) ? SYS_DOWNLOAD_TABLE : NV_PREFIXLANG . '_' . $module_data);
+
+$sql = 'SELECT * FROM ' . NV_MOD_TABLE . '_categories ORDER BY sort ASC';
 $list_cats = $nv_Cache->db($sql, 'id', $module_name);
+
+$global_array_shareport = array('none', 'addthis');
 
 /**
  * GetCatidInParent()
@@ -24,20 +28,22 @@ $list_cats = $nv_Cache->db($sql, 'id', $module_name);
 function GetCatidInParent($catid)
 {
     global $list_cats;
-
     $array_cat = array();
-    $array_cat[] = $catid;
-    $subcatid = explode(',', $list_cats[$catid]['subcatid']);
-
-    if (! empty($subcatid)) {
-        foreach ($subcatid as $id) {
-            if ($id > 0) {
-                if ($list_cats[$id]['numsubcat'] == 0) {
-                    $array_cat[] = (int)$id;
-                } else {
-                    $array_cat_temp = GetCatidInParent($id);
-                    foreach ($array_cat_temp as $catid_i) {
-                        $array_cat[] = (int)$catid_i;
+    
+    if (isset($list_cats[$catid]['subcatid'])) {
+        $array_cat[] = $catid;
+        $subcatid = explode(',', $list_cats[$catid]['subcatid']);
+    
+        if (! empty($subcatid)) {
+            foreach ($subcatid as $id) {
+                if ($id > 0) {
+                    if ($list_cats[$id]['numsubcat'] == 0) {
+                        $array_cat[] = (int)$id;
+                    } else {
+                        $array_cat_temp = GetCatidInParent($id);
+                        foreach ($array_cat_temp as $catid_i) {
+                            $array_cat[] = (int)$catid_i;
+                        }
                     }
                 }
             }
